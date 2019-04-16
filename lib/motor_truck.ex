@@ -10,40 +10,37 @@ defmodule MotorTruck do
       len = String.length(item)
       (len >= 3 && len < 8) || len == 10
     end)
+    |> Stream.map(&String.downcase(&1))
+    |> Stream.map(&get_number/1)
     |> Stream.each(fn(item) -> Store.set(store, item) end)
     |> Stream.run
 
-    Store.get(store, "zymome")
+    IO.inspect(Store.get(store, get_number("zyme")))
 
     IO.puts(:os.system_time(:millisecond) - start)
   end
 
-  def get_possibilities(number) do
-    number
+  def get_number(string) do
+    string
     |> String.split("", [ trim: true ])
     |> Enum.map(fn(num) ->
-      case num do
-        "2" -> ["a", "b", "c"]
-        "3" -> ["d", "e", "f"]
-        "4" -> ["g", "h", "i"]
-        "5" -> ["j", "k", "l"]
-        "6" -> ["m", "n", "o"]
-        "7" -> ["p", "q", "r", "s"]
-        "8" -> ["t", "u", "v"]
-        "9" -> ["w", "x", "y", "z"]
+      cond do
+        num == "a" || num == "b" || num == "c" -> "2"
+        num == "d" || num == "e" || num == "f" -> "3"
+        num == "g" || num == "h" || num == "i" -> "4"
+        num == "j" || num == "k" || num == "l" -> "5"
+        num == "m" || num == "n" || num == "o" -> "6"
+        num == "p" || num == "q" || num == "r" || num == "s" -> "7"
+        num == "t" || num == "u" || num == "v" -> "8"
+        num == "w" || num == "x" || num == "y" || num == "z" -> "9"
       end
     end)
-    |> Enum.reduce([[]], fn(current, acc) ->
-      Enum.reduce(acc, [], fn(list, acc2) ->
-        acc2 ++ Enum.map(current, fn(item) -> list ++ [item] end)
-      end)
-    end)
+    |> Enum.join
   end
 
   def run() do
-    number = "6686787825"
     { :ok, store } = Store.start_link
     init_store(store)
-    get_possibilities(number)
+    get_number("helloworld")
   end
 end
