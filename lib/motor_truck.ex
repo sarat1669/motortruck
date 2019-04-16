@@ -11,8 +11,9 @@ defmodule MotorTruck do
       (len >= 3 && len < 8) || len == 10
     end)
     |> Stream.map(&String.downcase(&1))
-    |> Stream.map(&get_number/1)
-    |> Stream.each(fn(item) -> Store.set(store, item) end)
+    |> Stream.each(fn(item) ->
+      Store.set(store, get_number(item), item)
+    end)
     |> Stream.run
 
     IO.inspect(Store.get(store, get_number("zyme")))
@@ -38,9 +39,45 @@ defmodule MotorTruck do
     |> Enum.join
   end
 
+  def find(length, store, number, items) do
+    item = String.slice(number, 0, length)
+
+    case Store.get(store, item) do
+      {:found, found} ->
+        str_length = String.length(number)
+        upto = str_length - length
+
+        cond do
+          upto > 3 ->
+            3..(str_length - length)
+            |> Enum.map(fn(i) ->
+              items ++ [ found ] ++ find(i, store, String.slice(number, length, str_length), items)
+            end)
+            |> Enum.filter(fn(items) ->
+              Enum.all?(items, fn(item) -> item != :null end)
+            end)
+          upto == 0 ->
+            items ++ [ found ]
+          true ->
+            [ :null ]
+        end
+      {:not_found} ->
+        items
+    end
+  end
+
+  def get_names(store, number) do
+    3..6
+    |> Enum.map(fn(i) ->
+      find(i, store, number, [])
+    end)
+    |> Enum.filter(fn(items) -> Enum.count(items) != 0 end)
+  end
+
   def run() do
     { :ok, store } = Store.start_link
     init_store(store)
-    get_number("helloworld")
+    get_names(store, "6686787825")
+    get_names(store, "2282668687")
   end
 end

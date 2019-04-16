@@ -8,12 +8,12 @@ defmodule MotorTruck.Store do
   def get(pid, item) do
     case GenServer.call(pid, {:get, item}) do
       [] -> {:not_found}
-      [{result}] -> {:found, result}
+      [{_number, names}] -> {:found, names}
     end
   end
 
-  def set(pid, item) do
-    GenServer.call(pid, {:set, item})
+  def set(pid, item, value) do
+    GenServer.call(pid, {:set, item, value})
   end
 
   def handle_call({:get, item}, _from, state) do
@@ -21,8 +21,13 @@ defmodule MotorTruck.Store do
     {:reply, result, state}
   end
 
-  def handle_call({:set, item }, _from, state) do
-    true = :ets.insert(:test, {item})
+  def handle_call({:set, item, value }, _from, state) do
+    value = case :ets.lookup(:test, item) do
+      [] -> [ value ]
+      [{ _number, values }] -> values ++ [ value ]
+    end
+
+    true = :ets.insert(:test, {item, value})
     {:reply, item, state}
   end
 
