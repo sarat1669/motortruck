@@ -27,11 +27,13 @@ Execution under 1ms
 3) Since a number can be of length 10, and with the condition that the words should be of minimum 3
 characters, the search scope is reduced to the following patterns
 
+```
 10
 7, 3
 6, 4
 5, 5
 4, 3, 3
+```
 
 4) Now that we have this range, we can narrow our searches to the range between 3 to 7 and 10
 5) 3..7 check for each length if there is a matching word. If its available, store it in an array
@@ -40,7 +42,7 @@ means it cannot become a word, so it can be discarded. If the word didn't match,
 discarded.
 6) Once you have the array of possible items at each iteration.
 
-Ex: ["noun", "onto"] ["struck"]
+`Ex: ["noun", "onto"] ["struck"]`
 
 Get the combinations of the possibilities
 7) Concatenate the array and the output is available
