@@ -1,9 +1,17 @@
 defmodule MotorTruck do
+  use Application
   alias MotorTruck.Store
 
-  defp init_store(store) do
+  def start(_type, _args) do
+    children = [Store]
+    c = Supervisor.start_link(children, strategy: :one_for_one)
     start = :os.system_time(:millisecond)
+    init_store()
+    IO.puts("InitStore took #{:os.system_time(:millisecond) - start} ms")
+    c
+  end
 
+  defp init_store() do
     File.stream!("dictionary.txt")
     |> Stream.map(&String.trim_trailing/1)
     |> Stream.filter(fn (item) ->
@@ -12,11 +20,9 @@ defmodule MotorTruck do
     end)
     |> Stream.map(&String.downcase(&1))
     |> Stream.each(fn(item) ->
-      Store.set(store, get_number(item), item)
+      Store.set(get_number(item), item)
     end)
     |> Stream.run
-
-    IO.puts(:os.system_time(:millisecond) - start)
   end
 
   defp get_number(string) do
@@ -37,10 +43,10 @@ defmodule MotorTruck do
     |> Enum.join
   end
 
-  defp find(length, store, number, items) do
+  defp find(length, number, items) do
     item = String.slice(number, 0, length)
 
-    case Store.get(store, item) do
+    case Store.get(item) do
       {:found, found} ->
         str_length = String.length(number)
         upto = str_length - length
@@ -49,7 +55,7 @@ defmodule MotorTruck do
           upto > 3 ->
             3..(str_length - length)
             |> Enum.map(fn(i) ->
-              found_new = find(i, store, String.slice(number, length, str_length), items)
+              found_new = find(i, String.slice(number, length, str_length), items)
               if(found_new != nil && Enum.all?(found_new, fn(item) -> item != nil end)) do
                 items ++ [ found ] ++ found_new
               else
@@ -70,16 +76,15 @@ defmodule MotorTruck do
     items
     |> Enum.reduce([[]], fn(current, acc) ->
       Enum.reduce(acc, [], fn(list, acc2) ->
-        IO.inspect(list)
         acc2 ++ Enum.map(current, fn(item) -> list ++ [item] end)
       end)
     end)
   end
 
 
-  defp get_names(store, number) do
-    outputs = 3..6
-    |> Enum.map(fn(i) -> find(i, store, number, []) end)
+  defp get_names(number) do
+    outputs = 3..7
+    |> Enum.map(fn(i) -> find(i, number, []) end)
     |> Enum.reduce([], fn(items, acc) ->
       if(items != nil) do
         acc ++ [ items |> Enum.filter(fn(i) -> i end) ]
@@ -91,7 +96,7 @@ defmodule MotorTruck do
     |> Enum.map(fn([i]) -> get_combinations(i) end)
 
 
-    case (Store.get(store, number)) do
+    case (Store.get(number)) do
       {:found, found} ->
         outputs ++ [ found ]
       {:not_found} ->
@@ -101,8 +106,13 @@ defmodule MotorTruck do
   end
 
   def run(number) do
-    { :ok, store } = Store.start_link
-    init_store(store)
-    get_names(store, number)
+    if(String.length(number) == 10) do
+      start = :os.system_time(:millisecond)
+      output = get_names(number)
+      IO.puts("Executed in #{:os.system_time(:millisecond) - start} ms")
+      output
+    else
+      IO.puts("Please enter a valid number with 10 digits as a string")
+    end
   end
 end

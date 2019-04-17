@@ -2,18 +2,18 @@ defmodule MotorTruck.Store do
   use GenServer
 
   def start_link(opts \\ []) do
-    GenServer.start_link(__MODULE__, :ok, opts)
+    GenServer.start_link(__MODULE__, :ok, [ name: __MODULE__ ])
   end
 
-  def get(pid, item) do
-    case GenServer.call(pid, {:get, item}) do
+  def get(item) do
+    case GenServer.call(__MODULE__, {:get, item}) do
       [] -> {:not_found}
       [{_number, names}] -> {:found, names}
     end
   end
 
-  def set(pid, item, value) do
-    GenServer.call(pid, {:set, item, value})
+  def set(item, value) do
+    GenServer.call(__MODULE__, {:set, item, value})
   end
 
   def handle_call({:get, item}, _from, state) do
