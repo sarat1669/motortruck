@@ -16,9 +16,9 @@ defmodule MotorTruck do
     end)
     |> Stream.run
 
-    IO.inspect(Store.get(store, get_number("zyme")))
+    # IO.inspect(Store.get(store, get_number("zyme")))
 
-    IO.puts(:os.system_time(:millisecond) - start)
+    # IO.puts(:os.system_time(:millisecond) - start)
   end
 
   def get_number(string) do
@@ -51,33 +51,49 @@ defmodule MotorTruck do
           upto > 3 ->
             3..(str_length - length)
             |> Enum.map(fn(i) ->
-              items ++ [ found ] ++ find(i, store, String.slice(number, length, str_length), items)
-            end)
-            |> Enum.filter(fn(items) ->
-              Enum.all?(items, fn(item) -> item != :null end)
+              found_new = find(i, store, String.slice(number, length, str_length), items)
+              if(found_new != nil && Enum.all?(found_new, fn(item) -> item != nil end)) do
+                items ++ [ found ++ found_new ]
+              else
+                nil
+              end
             end)
           upto == 0 ->
             items ++ [ found ]
           true ->
-            [ :null ]
+            nil
         end
       {:not_found} ->
-        items
+        nil
     end
   end
 
   def get_names(store, number) do
-    3..6
-    |> Enum.map(fn(i) ->
-      find(i, store, number, [])
+    outputs = 3..6
+    |> Enum.map(fn(i) -> find(i, store, number, []) end)
+    |> Enum.reduce([], fn(items, acc) ->
+      if(items != nil) do
+        acc ++ [ items |> Enum.filter(fn(i) -> i end) ]
+      else
+        acc
+      end
     end)
-    |> Enum.filter(fn(items) -> Enum.count(items) != 0 end)
+    |> Enum.filter(fn(i) -> !Enum.empty?(i) end)
+    |> Enum.map(fn([i]) -> i end)
+
+
+    case (Store.get(store, number)) do
+      {:found, found} ->
+        outputs ++ [ found ]
+      {:not_found} ->
+        outputs
+    end
   end
 
   def run() do
     { :ok, store } = Store.start_link
     init_store(store)
     get_names(store, "6686787825")
-    get_names(store, "2282668687")
+    #get_names(store, "2282668687")
   end
 end
