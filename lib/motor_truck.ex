@@ -1,7 +1,7 @@
 defmodule MotorTruck do
   alias MotorTruck.Store
 
-  def init_store(store) do
+  defp init_store(store) do
     start = :os.system_time(:millisecond)
 
     File.stream!("dictionary.txt")
@@ -16,12 +16,10 @@ defmodule MotorTruck do
     end)
     |> Stream.run
 
-    # IO.inspect(Store.get(store, get_number("zyme")))
-
-    # IO.puts(:os.system_time(:millisecond) - start)
+    IO.puts(:os.system_time(:millisecond) - start)
   end
 
-  def get_number(string) do
+  defp get_number(string) do
     string
     |> String.split("", [ trim: true ])
     |> Enum.map(fn(num) ->
@@ -39,7 +37,7 @@ defmodule MotorTruck do
     |> Enum.join
   end
 
-  def find(length, store, number, items) do
+  defp find(length, store, number, items) do
     item = String.slice(number, 0, length)
 
     case Store.get(store, item) do
@@ -53,7 +51,7 @@ defmodule MotorTruck do
             |> Enum.map(fn(i) ->
               found_new = find(i, store, String.slice(number, length, str_length), items)
               if(found_new != nil && Enum.all?(found_new, fn(item) -> item != nil end)) do
-                items ++ [ found ++ found_new ]
+                items ++ [ found ] ++ found_new
               else
                 nil
               end
@@ -68,7 +66,18 @@ defmodule MotorTruck do
     end
   end
 
-  def get_names(store, number) do
+  defp get_combinations(items) do
+    items
+    |> Enum.reduce([[]], fn(current, acc) ->
+      Enum.reduce(acc, [], fn(list, acc2) ->
+        IO.inspect(list)
+        acc2 ++ Enum.map(current, fn(item) -> list ++ [item] end)
+      end)
+    end)
+  end
+
+
+  defp get_names(store, number) do
     outputs = 3..6
     |> Enum.map(fn(i) -> find(i, store, number, []) end)
     |> Enum.reduce([], fn(items, acc) ->
@@ -79,7 +88,7 @@ defmodule MotorTruck do
       end
     end)
     |> Enum.filter(fn(i) -> !Enum.empty?(i) end)
-    |> Enum.map(fn([i]) -> i end)
+    |> Enum.map(fn([i]) -> get_combinations(i) end)
 
 
     case (Store.get(store, number)) do
@@ -88,12 +97,12 @@ defmodule MotorTruck do
       {:not_found} ->
         outputs
     end
+    |> Enum.concat()
   end
 
-  def run() do
+  def run(number) do
     { :ok, store } = Store.start_link
     init_store(store)
-    get_names(store, "6686787825")
-    #get_names(store, "2282668687")
+    get_names(store, number)
   end
 end
